@@ -21,7 +21,7 @@ public :
 	void stop() ;
 
 	loc_t data ;
-	volatile float lat, lon ;
+    volatile float lat, lon, alt ;
 
 
 } ;

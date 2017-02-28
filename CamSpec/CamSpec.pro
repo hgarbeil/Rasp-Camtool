@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui printsupport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -21,14 +21,20 @@ SOURCES += main.cpp\
     ../Cam.cpp \
     ../clientTCP.cpp \
     ../GPS.cpp \
-    ../IMUThread.cpp
+    ../IMUThread.cpp \
+    qcustomplot.cpp \
+    myplot.cpp
+    #Avantes.cpp
 
 HEADERS  += mainwindow.h \
     ../Avaspec.h \
     ../Cam.h \
     ../clientTCP.h \
     ../GPS.h \
-    ../IMUThread.h
+    ../IMUThread.h \
+    qcustomplot.h \
+    myplot.h
+    #Avantes.h
 
 FORMS    += mainwindow.ui
 

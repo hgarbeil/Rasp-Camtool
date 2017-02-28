@@ -88,6 +88,7 @@ void CamC::writeJPeg (const char *fname, unsigned char *data) {
 	
 	
 
+/*
 int main (int argc, char *argv[] ) {
 	int w, h ;
 	unsigned char *data ;
@@ -101,8 +102,8 @@ int main (int argc, char *argv[] ) {
 	c.writeJPeg ("test.jpg", data) ;
 	
 	delete [] data ;
-	
 }
+*/
 	
 
 

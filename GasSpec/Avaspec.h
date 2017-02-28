@@ -1,44 +1,46 @@
-#include <stdio.h>
+
 #include <sys/types.h>
 #include <thread>
 #include "avaspec.h"
-#include <QObject>
-#include <QTimer>
 
 using namespace std ;
 
 
-class Avaspec : public QObject {
-    Q_OBJECT
+class Avaspec  {
 public :
 
+	
 
 
 	Avaspec() ;
 	~Avaspec() ;
 	
 	int init() ;
-	//void getSpectrometer (int specnum) ;
-    AvsIdentityType a_pList[2] ;
-    static bool darkReady, singleReady, autoReady, contReady ;
-    AvsHandle spec [2];
-    float *waves ;
-    double *outdat ;
-    double *specData, *dark ;
+	std::thread m_thread ;
+    	AvsIdentityType a_pList[2] ;
+    	static bool darkReady[2], singleReady, autoReady, contReady [2];
+    	bool checkSpecRunning ;
 
-    int curLev, nspecs, nscansCollect, nscansDark ;
-    unsigned short npix ;
+    	static AvsHandle spec [2];
+    	float *waves ;
+    	float *outdat ;
+    	double *specData, *dark ;
+
+    	int curLev, nspecs, nscansCollect, nscansDark ;
+    	int scansCollected [2] ;
+    	unsigned short npix ;
 
 	void setPixels (int specnum, int start, int stop) ;
 
 
-	void initMeasStruct (int) ;
+    void initMeasStruct (int) ;
     void setScanData (int scans, double *dat) ;
     void setContFlag (bool f) ;
     void setIntegrationTime (int snum, float time) ;
     void setIntegrationTime (int lev) ;
+    void checkSpec () ;
     int autoIntegrate (int lev) ;
-    float getMax (double *dat) ;
+    float getMax (float *dat) ;
 
     void takeCont() ;
     void takeSingle() ;
@@ -56,14 +58,15 @@ public :
 
     static int intTimes [7], nscansAvg[7] ;
     static int maxDN ;
-    QTimer *timer ;
 
+/*
 signals :
     void gotData() ;
     void newInt (int) ;
 
 public slots :
     void checkSpec() ;
+*/
 
 } ;
 

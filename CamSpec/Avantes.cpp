@@ -4,36 +4,42 @@
 #include "unistd.h"
 //#include <thread>
 #include <iostream>
-//#include "Avantes.h"
+#include "Avantes.h"
+
+
+
 using namespace std;
+
+double specData [3648] ;
+bool dataReady ;
+namespace Avantes {
 
 AvsIdentityType a_pList[2] ;
 MeasConfigType l_PrepareMeasData [2] ;
 AvsHandle spec[2] ;
-
 
 short nscans_dark, nscans_collect ;
 int nCollected ;
 int nspecs, avs_status ;
 unsigned short npix ;
 double *dark ;
-
+/*
 int avantes_init () ;
 void avantes_closeup () ;
 void avantes_initMeasStruct (int specNum);
 void avantes_collectDark () ;
 void avantes_darkCB (AvsHandle *av, int *result) ;
 int main(int argc, char *argv[]) ;
-
+*/
 
 int avantes_init () {
     int status ;
     unsigned int bset ;
     nscans_collect = 10 ;
-    nscans_dark = 5 ;
+    nscans_dark = 25 ;
     npix = 3648 ;
     nCollected = 0 ;
-
+    dataReady = false ;
     avs_status = AVS_Init (0) ;
 
     cout << "Spectrometer init status is : " << avs_status << endl ;
@@ -52,8 +58,8 @@ int avantes_init () {
     avs_status = AVS_GetNumPixels (spec[0], &npix) ;
     cout << "Number of npix is : " << npix << endl ;
 
-    avantes_initMeasStruct(0);
-    avantes_initMeasStruct(1);
+    Avantes::avantes_initMeasStruct(0);
+    Avantes::avantes_initMeasStruct(1);
 
     dark = new double [npix] ;
     
@@ -79,7 +85,7 @@ void avantes_closeup () {
 void avantes_initMeasStruct (int specNum){
         l_PrepareMeasData[specNum].m_StartPixel = 0 ;
         l_PrepareMeasData[specNum].m_StopPixel = npix-1 ;
-        l_PrepareMeasData[specNum].m_IntegrationTime = 1000 ;
+        l_PrepareMeasData[specNum].m_IntegrationTime = 100;
         l_PrepareMeasData[specNum].m_IntegrationDelay = 0 ;
         l_PrepareMeasData[specNum].m_NrAverages = 1 ;
         l_PrepareMeasData[specNum].m_CorDynDark.m_Enable = 0;
@@ -108,7 +114,7 @@ void avantes_collectDark () {
 	nCollected = 0 ;
 	status = 1 ;
 	while (status!=0) {
-        	status = AVS_MeasureCallback (spec[0], avantes_darkCB, nscans_dark) ;
+            status = AVS_MeasureCallback (spec[0], Avantes::avantes_darkCB, nscans_dark) ;
 		usleep (100000) ;
 	}
         cout << "measure status is "  << status << endl ;
@@ -122,8 +128,9 @@ void avantes_collectDark () {
 
 void avantes_darkCB (AvsHandle *av, int *result) {
     unsigned int timLabel ;
-    double specData[3648] ;
+
     AVS_GetScopeData(*av, &timLabel, specData) ;
+    dataReady = true ;
     if (nCollected!=0)
     {
     	for (int i=0; i<npix; i++) {
@@ -134,15 +141,15 @@ void avantes_darkCB (AvsHandle *av, int *result) {
     cout << "Spec num 300 "<< dark[300] << endl ;
 }
 
-
-
-int main(int argc, char*argv[]) {
-	int status ;
-	status = avantes_init() ;
-	if (status < 1) {
-		return (-1) ;
-	}
-	avantes_collectDark() ; 
-	avantes_closeup() ;
-
 }
+
+//int main(int argc, char*argv[]) {
+//	int status ;
+//	status = avantes_init() ;
+//	if (status < 1) {
+//		return (-1) ;
+//	}
+//	avantes_collectDark() ;
+//	avantes_closeup() ;
+
+//}

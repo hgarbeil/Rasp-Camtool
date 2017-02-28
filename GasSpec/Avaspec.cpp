@@ -2,8 +2,8 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
-#include <QDebug>
 #include <mutex>
+#include <iostream>
 
 using namespace std ;
 std::mutex mtx ;
@@ -11,109 +11,122 @@ std::mutex mtx ;
 int Avaspec::intTimes [] = {50, 100, 250, 500, 750, 1000, 1500} ;
 int Avaspec::nscansAvg [] = {8, 4, 4, 2, 2,1,1} ;
 int Avaspec::maxDN = 16384. * .9 ;
-
-bool Avaspec::darkReady = false ;
+bool Avaspec::darkReady[] = {false, false} ;
+bool Avaspec::contReady[] = {false, false} ;
 bool Avaspec::singleReady = false ;
-bool Avaspec::contReady = false ;
 bool Avaspec::autoReady = false ;
+AvsHandle Avaspec::spec[] = {-1,-1} ;
 
-
-/* statics
-
- */
 void Avaspec::darkCallback (AvsHandle *av, int *result) {
-    darkReady = true ;
-    qDebug() << *result << "  Wahoo " ;
+        for (int i=0;i<2; i++){
+		if (*av == spec[i]) {
+			darkReady [i] = true  ;
+			break ;
+		}
+	}
 }
 
 void Avaspec::dataCallback (AvsHandle *av, int *result) {
     singleReady = true ;
-    qDebug() << *result << "  Wahoo " ;
 }
 
 void Avaspec::contCallback (AvsHandle *av, int *result) {
-    contReady = true ;
-    qDebug() << *result << "  Wahoo " ;
+   	int i ;
+       for (i=0;i<2; i++) {
+		if (*av == spec[i]) {
+			contReady [i] = true  ;
+			break ;
+		}
+	}
 }
 
 void Avaspec::autoCallback (AvsHandle *av, int *result) {
     autoReady = true ;
-    qDebug() << *result << "  Wahoo " ;
 }
 
 Avaspec::Avaspec() {
-    needsUpdate = new bool [2] ;
+    	needsUpdate = new bool [2] ;
 	needsUpdate[0] = true ;
-    needsUpdate[1] = true ;
+    	needsUpdate[1] = true ;
+	scansCollected [0] = 0 ;
+	scansCollected [1] = 0 ;
 
 
 	waves = 0l ;
 	specData = 0L ;
-    dark = 0L ;
+    	dark = 0L ;
 
 	npix = 3648 ;
-    nscansCollect = 500000 ;
-    nscansDark = 5 ;
+    	nscansCollect = 500000 ;
+    	nscansDark = 5 ;
 
 
 
-    autoReady = false ;
-    darkReady = false ;
-    singleReady = false ;
-    contReady = false ;
+    	autoReady = false ;
+    	singleReady = false ;
+	outdat = new float [3648*2] ;
 
-    timer = new QTimer () ;
-    connect (timer, SIGNAL (timeout()), this, SLOT (checkSpec())) ;
-    timer->start (20) ;
-    curLev = 1 ;
+    //timer = new QTimer () ;
+    //connect (timer, SIGNAL (timeout()), this, SLOT (checkSpec())) ;
+    //timer->start (20) ;
+    	curLev = 1 ;
+    	nspecs = 2 ;
 
 }
 
 int Avaspec::init() {
+    int i ;
     unsigned int bset ;
 
     //printf ("Number of mini-avs specs found %n\r\n", nspecs) ;
     int n = AVS_Init(0) ;
     if (n<0) {
-        qDebug () <<"AVS Init failed- returned " << n  ;
+        cout <<"AVS Init failed- returned " << n  << endl ;
         return (-1);
     }
     nspecs = AVS_GetNrOfDevices() ;
+	cout << "Number of devices is : " << nspecs << endl ;
     if (nspecs < 1) {
-        qDebug () << "AVS_GetNrOfDevices returns : " << nspecs ;
+	cout << "Number of devices is : " << nspecs << endl ;
         return (-1) ;
     }
     n = AVS_GetList (sizeof(a_pList), &bset, &a_pList[0]) ;
     if (n < 1) {
-        qDebug () << "Could not get spec list " ;
-        return (-1) ;
+	cout << "Could not get spec list " << endl ;
     }
-    initMeasStruct (0) ;
-    initMeasStruct (1) ;
 
-    spec[0] = AVS_Activate (&a_pList[0]) ;
     AVS_GetNumPixels(spec[0], &npix) ;
+    double *dwaves = new double [npix * 2] ;
+    for (i=0; i<nspecs; i++) 
+    {
+    	initMeasStruct (i) ;
+    	spec[i] = AVS_Activate (&a_pList[i]) ;
+    	AVS_GetLambda (spec[i], &dwaves[i*npix]) ;
+	
+    }
 
     // init the lambda arrays as well as the dark arrays
-    waves = new float [npix];
-    dark = new double [npix] ;
-    specData = new double [npix] ;
-    double *dwaves = new double [npix] ;
-    AVS_GetLambda (spec[0], &dwaves[0]) ;
+    waves = new float [npix * 2];
+    dark = new double [npix * 2] ;
+    specData = new double [npix * 2] ;
+    for (i=0; i<nspecs; i++){ 
     for (int is=0;is<npix; is++){
-            waves[is] = (float) dwaves [is] ;
-            dark[is]=0. ;
-            specData[is] = 0.;
+            waves[i*npix+is] = (float) dwaves [i*npix+is] ;
+            dark[i*npix+is]=0. ;
+            specData[i*npix+is] = 0.;
     }
 
 
-    AVS_SetPrescanMode(spec[0], true) ;
+    AVS_SetPrescanMode(spec[i], true) ;
+    }
     delete [] dwaves ;
 
+    checkSpecRunning = true ;
+    m_thread = std::thread (&Avaspec::checkSpec, this) ;
+    m_thread.detach() ;
 
 
 
-    //timer->start (100) ;
     return (1) ;
 
 }
@@ -134,7 +147,7 @@ void Avaspec::start () {
         AVS_StopMeasure (spec[i]) ;
         //status = AVS_Measure(spec[i], &Avaspec::dataCallback, nscans) ;
         status = AVS_Measure(spec[i], NULL, nscans) ;
-        qDebug () << "Avs measure status : " << status ;
+	cout << "Measure status is " << status << endl ;
 
 
 	}
@@ -152,7 +165,7 @@ void Avaspec::stop () {
 
 
 void Avaspec::setScanData (int nscans, double *d) {
-    this->outdat = d ;
+    //this->outdat = d ;
     //this->nscansCollect = nscans ;
 }
 
@@ -214,7 +227,7 @@ int Avaspec::autoIntegrate (int level) {
     l_PrepareMeasData[0].m_NrAverages = Avaspec::nscansAvg[level] ;
     while (status < 0) {
         status = AVS_PrepareMeasure(spec[0], &l_PrepareMeasData[0]) ;
-        qDebug () << "Preparing" ;
+	cout << "Preparing "<< endl ;
         usleep (200000) ;
     }
     status = -1 ;
@@ -222,7 +235,7 @@ int Avaspec::autoIntegrate (int level) {
     //AVS_MeasureCallback (spec[0], &Avaspec::autoCallback, 1) ;
 
     while (status <0) {
-        qDebug () << "AI " << level << " " << status ;
+	cout << " AI " << level << "  " << status << endl ;
         status = AVS_MeasureCallback(spec[0], &Avaspec::autoCallback, 1) ;
         if (status < 0) usleep (50000) ;
     }
@@ -254,14 +267,17 @@ void Avaspec::takeDark() {
     //this->goThread = true ;
 
     // init the dark array
-    darkReady = false ;
-    l_PrepareMeasData[0].m_NrAverages = 5 ;
-    status = AVS_PrepareMeasure (spec[0], &l_PrepareMeasData[0]) ;
-    usleep (200000) ;
-    status = -1 ;
-    while (status <0) {
-        status = AVS_MeasureCallback(spec[0], &Avaspec::darkCallback, 1) ;
-        if (status < 0) usleep (50000) ;
+    for (i=0; i<nspecs; i++) {
+    	darkReady[i] = false ;
+    	l_PrepareMeasData[i].m_NrAverages = 5 ;
+    	status = AVS_PrepareMeasure (spec[i], &l_PrepareMeasData[i]) ;
+    	usleep (200000) ;
+    	status = -1 ;
+    	while (status <0) {
+        	status = AVS_MeasureCallback(spec[i], &Avaspec::darkCallback, 1) ;
+        	if (status < 0) usleep (50000) ;
+	}
+    	usleep (200000) ;
     }
 }
 
@@ -291,21 +307,25 @@ void Avaspec::takeCont() {
     int i,  is, specNum, count=0, ifail, isucc, status ;
     unsigned int timLabel ;
     short icols = 1 ;
+    scansCollected [0] = scansCollected[1] = 0;
     //this->goThread = true ;
 
     // init the dark array
-    singleReady = false ;
-    l_PrepareMeasData[0].m_NrAverages = 1 ;
-    status = AVS_PrepareMeasure (spec[0], &l_PrepareMeasData[0]) ;
-    usleep (200000) ;
-    status = -1 ;
-    while (status <0) {
-        status = AVS_MeasureCallback(spec[0], &Avaspec::contCallback, 1) ;
-        if (status < 0) usleep (50000) ;
+    for (i=0; i<nspecs; i++) {
+    	contReady[i] = false ;
+    	l_PrepareMeasData[i].m_NrAverages = 1 ;
+    	status = AVS_PrepareMeasure (spec[i], &l_PrepareMeasData[i]) ;
+    	usleep (200000) ;
+    	status = -1 ;
+    	while (status <0) {
+        	status = AVS_MeasureCallback(spec[i], &Avaspec::contCallback, 1) ;
+
+	        if (status < 0) usleep (50000) ;
+	}
     }
 }
 
-float Avaspec::getMax (double *dat) {
+float Avaspec::getMax (float *dat) {
     int i ;
     float max = -1.E9 ;
     for (i=0;i<npix;i++) {
@@ -317,51 +337,63 @@ float Avaspec::getMax (double *dat) {
 }
 
 void Avaspec::checkSpec () {
-    int status, count=0, is ;
+    int i, status, count=0, is ;
     unsigned int timLabel ;
     //status = AVS_PollScan (spec[0]) ;
 
-    if (darkReady) {
+    while (checkSpecRunning) {
 
-        qDebug() << "checkSpec : darkReady"  ;
-        AVS_GetScopeData (spec[0], &timLabel, specData) ;
+    for (i=0; i<nspecs; i++) 
+    if (darkReady[i]) {
 
+        cout  << "checkSpec : darkReady" << endl  ;
         mtx.lock() ;
+        AVS_GetScopeData (spec[i], &timLabel, &specData[npix*i]) ;
         for (is=0; is<npix; is++) this->outdat[is] = specData[is] ;
+        darkReady[i] = false ;
+        for (is=0; is<npix; is++) dark[i*npix+is] = specData[is] ;
         mtx.unlock() ;
-        darkReady = false ;
-        emit (gotData());
-        for (is=0; is<npix; is++) dark[is] = specData[is] ;
-        l_PrepareMeasData[0].m_NrAverages = 1 ;
-        AVS_PrepareMeasure(spec[0], &l_PrepareMeasData[0]) ;
+        l_PrepareMeasData[i].m_NrAverages = 1 ;
+        AVS_PrepareMeasure(spec[i], &l_PrepareMeasData[i]) ;
     }
 
     if (singleReady) {
 
-        qDebug() << "checkSpec : darkReady"  ;
+        cout << "checkSpec : singleReady" << endl ;
         AVS_GetScopeData (spec[0], &timLabel, specData) ;
 
         mtx.lock() ;
         for (is=0; is<npix; is++) this->outdat[is] = specData[is] - dark[is] ;
         mtx.unlock() ;
         singleReady = false ;
-        emit (gotData());
-        //for (is=0; is<npix; is++) dark[is] = specData[is] - dark[is];
+        //for (is=0; is<npix; is++) outdat[is] = specData[is] - dark[is];
         l_PrepareMeasData[0].m_NrAverages = 1 ;
         AVS_PrepareMeasure(spec[0], &l_PrepareMeasData[0]) ;
     }
 
-    if (contReady) {
-
-        qDebug() << "checkSpec : darkReady"  ;
-        AVS_GetScopeData (spec[0], &timLabel, specData) ;
+    for (i=0; i<nspecs; i++) 
+    if (contReady[i]) {
+	cout << "Got data for spec : " << i << endl ;
 
         mtx.lock() ;
-        for (is=0; is<npix; is++) this->outdat[is] = specData[is] - dark[is] ;
+        AVS_GetScopeData (spec[i], &timLabel, specData) ;
+
+        for (is=0; is<npix; is++) this->outdat[npix * i + is] = specData[is] - dark[npix *i +is] ;
+        cout << "checkSpec : "  << i << scansCollected [i]++ << "  " << outdat[npix *i + 3000] << endl  ;
+        contReady [i] = false ;
         mtx.unlock() ;
-        contReady = false ;
-        emit (gotData());
-        if (contFlag) this->takeCont() ;
+        //if (contFlag[i]) this->takeCont() ;
+	scansCollected [i]++ ;
+	if (scansCollected[i] >= 100) checkSpecRunning = false ;
+	else {
+		status = -1 ;
+    		while (status <0) {
+	        	status = AVS_MeasureCallback(spec[i], &Avaspec::contCallback, 1) ;
+       		 	if (status < 0) usleep (50000) ;
+			cout << "Next scan status : " << status << endl ;
+
+		}
+	}
 
     }
 
@@ -372,7 +404,6 @@ void Avaspec::checkSpec () {
         mtx.lock() ;
         for (is=0; is<npix; is++) this->outdat[is] = specData[is]  ;
         mtx.unlock() ;
-        emit (gotData());
         usleep (100000) ;
         float mval = getMax (outdat) ;
         if (mval >= Avaspec::maxDN) {
@@ -381,7 +412,8 @@ void Avaspec::checkSpec () {
             if (curLev < 6){
                 curLev++ ;
                 autoIntegrate (curLev) ;
-                qDebug() << "checkSpec : autoReady : curlev : "<< curLev  ;
+                cout << "checkSpec : autoReady : curlev : "<< curLev << endl  ;
+		
 
             }
             else {
@@ -394,6 +426,9 @@ void Avaspec::checkSpec () {
         }
 
     }
+
+	} // end of while
+	cout << "Thread is closed " << endl ;
 }
 
 /*

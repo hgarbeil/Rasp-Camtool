@@ -1,3 +1,5 @@
+#ifndef IMU
+#define IMU
 #include "RTIMULib.h"
 #include <thread>
 
@@ -15,6 +17,7 @@ public :
 	int m_timer ;
 	void startCollecting () ;
 	void startThread () ;
+	void getEuler (float *, float *, float *) ;
 	std::thread m_thread ;
 	void newIMU() ;
 	RTIMU *getIMU() {
@@ -22,3 +25,5 @@ public :
 	}
 }
 ;
+
+#endif 

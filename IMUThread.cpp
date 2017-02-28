@@ -1,5 +1,9 @@
 #include "IMUThread.h"
+#include <math.h>
 #include "GPS.h"
+
+#define r2d 180./M_PI
+
 
 IMUThread::IMUThread() 
 {
@@ -49,9 +53,9 @@ while (1) {
 		printf ("In the loop\r\n") ;
 		rdata = m_imu->getIMUData() ;
 		pressure->pressureRead(rdata) ;
-		roll = rdata.fusionPose.x() ;
-		pitch = rdata.fusionPose.y() ;
-		yaw = rdata.fusionPose.z() ;
+		roll = rdata.fusionPose.x() * r2d ;
+		pitch = rdata.fusionPose.y() *r2d ;
+		yaw = rdata.fusionPose.z() * r2d ;
 		//rdata = m_imu->getCompass() ;
 		
 		
@@ -66,7 +70,14 @@ while (1) {
 }	
 }
 
+void IMUThread::getEuler (float *r, float *p, float *y) {
+	*r = roll ;
+	*p = pitch ;
+	*y = yaw ;
+	return ;
+}
 
+/*
 int main (int argc, char *argv[]) {
 	
 	IMUThread *imu = new IMUThread() ;
@@ -77,3 +88,4 @@ int main (int argc, char *argv[]) {
 	while (1) {
 	}
 }
+*/
