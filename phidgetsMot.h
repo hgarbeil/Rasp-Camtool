@@ -4,9 +4,11 @@
 #include <phidget21.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <QObject>
 
-class phidgetsMot  {
-	public :
+class phidgetsMot : public QObject {
+    Q_OBJECT
+public :
     CPhidgetServoHandle servo, servo1, servoCell, servoScan ;
     phidgetsMot () ;
 	~phidgetsMot () ;
@@ -23,7 +25,6 @@ class phidgetsMot  {
     void setLow() ;
     void setHigh() ;
     void setRef() ;
-    void emit (int) ;
     void init () ;
     bool firstTimeMirrorFlag ;
     int low, ref,  high, dark ;
@@ -31,6 +32,8 @@ class phidgetsMot  {
     int cellSer, scanSer ;
     int nmotors, lastPos ;
     float scanscale, scanoff, caloff ;
+signals :
+
 
 } ;
 

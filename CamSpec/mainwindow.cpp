@@ -4,7 +4,7 @@
 #include <mutex>
 //using namespace Avantes ;
 extern bool dataReady ;
-extern double specData [] ;
+extern double *specData ;
 
 std::mutex specLock ;
 
@@ -24,31 +24,42 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->singleScanButton->setStyleSheet("background-color:orange") ;
     ui->contButton->setStyleSheet("background-color:orange") ;
 
+    // create GPS class
     gps = new GPS () ;
     gps->init() ;
     gps->start() ;
+
+    // phidgets motor class
+    pm = new phidgetsMot () ;
+    pm->setRef () ;
+
+    // and spectrometer class
     ava = new Avaspec () ;
-    status = ava->init() ;
+    // define working directory then init
+    ava->setWorkDir ("/home/pi/data") ;
+    numSpec = ava->init() ;
+    qDebug () << "Number of spectrometers found " << numSpec<<endl ;
 //    specdata = new float [ava->npix * ava->nspecs] ;
-     connect (ava, SIGNAL(gotData()), this, SLOT(on_gotData())) ;
+//     connect (ava, SIGNAL(gotData()), this, SLOT(on_gotData())) ;
 //    connect (ava, SIGNAL(newInt(int)), this, SLOT (on_newInt(int))) ;
 
-      if (status < 1){
-          qDebug() << "No spectrometer found" ;
-      }
 
-      waves = new double [3648] ;
-      specdata = new double [3648] ;
+      waves = new double [3648*numSpec] ;
+      specdata = new double [3648*numSpec] ;
+      for (int is=0; is<numSpec; is++)
       for (int i=0; i<3648; i++) {
-          waves[i] = ava->waves[i] ;
-          specdata[i] = 0. ;
+          waves[is*3648+i] = ava->waves[is*3648+i] ;
+          specdata[is*3648+i] = 0. ;
       }
-      ui->specPlot->setAxisRange (0, ava->waves[0], ava->waves[ava->npix-1]) ;
+      //ava->setScanData (1000, specata) ;
+      ui->specPlot->setAxisRange (0, ava->waves[0], ava->waves[numSpec * 3648 -1]) ;
 
 
       upTimer = new QTimer (this) ;
       connect (upTimer, SIGNAL (timeout()), this, SLOT(updateGUI())) ;
+      connect (ava, SIGNAL(plotSpec(int)), this, SLOT(plotSpec(int)) ) ;
       upTimer->start(800) ;
+
 
 }
 
@@ -105,7 +116,7 @@ void MainWindow::on_newInt(int ival) {
 
 void MainWindow::on_stopCollectButton_clicked()
 {
-    //ava->stop() ;
+    ava->stop() ;
     ava->setContFlag (false ) ;
     ui->stopCollectButton->setEnabled(false);
     ui->stopCollectButton->setStyleSheet
@@ -116,7 +127,7 @@ void MainWindow::on_stopCollectButton_clicked()
 void MainWindow::on_autoIntButton_clicked()
 {
     ava->setScanData (1000, specdata) ;
-    ava->autoIntegrate (0) ;
+    ava->autoIntegrate (0,0) ;
     ui->autoIntButton->setStyleSheet("background-color:green") ;
 }
 
@@ -126,6 +137,7 @@ void MainWindow::on_darkButton_clicked()
     //avantes_collectDark() ;
     //int status = QMessageBox::information (this, tr("Dark Cal..."), tr ("Prepare for dark then hit ok")) ;
     //ava->setScanData (1000, specdata) ;
+    pm->setDark() ;
     ava->setScanData (1000,specdata) ;
     ava->takeDark () ;
     ui->darkButton->setStyleSheet ("background-color:orange; color:white") ;
@@ -151,6 +163,7 @@ void MainWindow::updateGUI () {
 
 void MainWindow::on_contButton_clicked()
 {
+    pm->setRef() ;
     ui->stopCollectButton->setEnabled (true) ;
     ui->stopCollectButton->setStyleSheet
         ("background-color:#ff3f3f") ;
@@ -158,4 +171,12 @@ void MainWindow::on_contButton_clicked()
     ava->setContFlag (true) ;
     ava->setScanData(1000, specdata);
     ava->takeCont() ;
+}
+
+
+// plot the spectrum from the snum (0 or 1) spectrometer
+void MainWindow::plotSpec (int snum){
+    ui->specPlot->setXYData (snum, &waves[snum*3648], &specData[snum*3648], 3648) ;
+    qDebug () << "Plotting " << snum << "Spectrum " ;
+
 }

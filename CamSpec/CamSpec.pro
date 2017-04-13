@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     ../GPS.cpp \
     ../IMUThread.cpp \
     qcustomplot.cpp \
-    myplot.cpp
+    myplot.cpp \
+    ../phidgetsMot.cpp
     #Avantes.cpp
 
 HEADERS  += mainwindow.h \
@@ -33,7 +34,8 @@ HEADERS  += mainwindow.h \
     ../GPS.h \
     ../IMUThread.h \
     qcustomplot.h \
-    myplot.h
+    myplot.h \
+    ../phidgetsMot.h
     #Avantes.h
 
 FORMS    += mainwindow.ui
@@ -41,4 +43,4 @@ FORMS    += mainwindow.ui
 
 INCLUDEPATH += /home/pi/workdir/libgps/src /usr/local/include/libavs /home/pi/workdir/camtool
 
-LIBS += -L/home/pi/workdir/libgps/build -L/usr/local/lib -lavs -lgps -lRTIMULib -lraspicam -ljpeg -lpthread -lm
+LIBS += -L/home/pi/workdir/libgps/build -L/usr/local/lib -lavs -lgps -lRTIMULib -lraspicam -ljpeg -lpthread -lm -lphidget21

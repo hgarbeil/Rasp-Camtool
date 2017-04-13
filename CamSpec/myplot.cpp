@@ -8,7 +8,7 @@ MyPlot::MyPlot(QWidget *parent) :
     npts = 3648 ;
     addGraph () ;
     addGraph () ;
-    yAxis->setRange (-200,600) ;
+    yAxis->setRange (0,16000) ;
     xAxis->setRange (200,1200) ;
     QPen p (Qt::black) ;
     graph(0)->setPen (p) ;
@@ -44,7 +44,7 @@ void MyPlot::setXYData (int igraph, float *xdata, float *ydata, int npts) {
         yVec.append(ydata[i]) ;
     }
     this->graph(igraph)->setData (xVec, yVec) ;
-    this->rescaleAxes() ;
+    //this->rescaleAxes() ;
     this->replot() ;
 qDebug () << "replotting" ;
 
@@ -61,7 +61,7 @@ void MyPlot::setXYData (int igraph, double *xdata, double *ydata, int npts) {
         yVec.append(ydata[i]) ;
     }
     this->graph(igraph)->setData (xVec, yVec) ;
-    this->rescaleAxes() ;
+    //this->rescaleAxes() ;
     this->replot() ;
 qDebug () << "replotting" ;
 

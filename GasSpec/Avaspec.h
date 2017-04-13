@@ -1,7 +1,10 @@
 
+#include <stdio.h>
+#include <time.h>
 #include <sys/types.h>
 #include <thread>
 #include "avaspec.h"
+#include "phidgetsMot.h"
 
 using namespace std ;
 
@@ -18,28 +21,32 @@ public :
 	int init() ;
 	std::thread m_thread ;
     	AvsIdentityType a_pList[2] ;
+	phidgetsMot *pm ;
     	static bool darkReady[2], singleReady, autoReady, contReady [2];
-    	bool checkSpecRunning ;
+    	bool checkSpecRunning, autoScanning ;
+	char workDir [420] ;
 
     	static AvsHandle spec [2];
     	float *waves ;
-    	float *outdat ;
-    	double *specData, *dark ;
+    	float *outdat, *dark ;
+    	double *specData ; 
 
-    	int curLev, nspecs, nscansCollect, nscansDark ;
+    	int curLev, curSpec, nspecs, nscansCollect, nscansDark ;
     	int scansCollected [2] ;
     	unsigned short npix ;
 
 	void setPixels (int specnum, int start, int stop) ;
+	void setPM(phidgetsMot *pm) ;
 
 
     void initMeasStruct (int) ;
     void setScanData (int scans, double *dat) ;
     void setContFlag (bool f) ;
     void setIntegrationTime (int snum, float time) ;
-    void setIntegrationTime (int lev) ;
+    void setIntegrationTime (int snum, int lev) ;
     void checkSpec () ;
-    int autoIntegrate (int lev) ;
+    void setWorkDir (const char *) ;
+    int autoIntegrate (int spec, int lev) ;
     float getMax (float *dat) ;
 
     void takeCont() ;
@@ -47,8 +54,10 @@ public :
     void takeDark () ;
     void start() ;
     void stop () ;
+    char *getTimeString (time_t) ;
 
     bool *needsUpdate, contFlag ;
+
     MeasConfigType l_PrepareMeasData[2];
 
     static void darkCallback (AvsHandle *hnd, int *result) ;
@@ -58,6 +67,7 @@ public :
 
     static int intTimes [7], nscansAvg[7] ;
     static int maxDN ;
+    FILE *contUnit[2] ;
 
 /*
 signals :

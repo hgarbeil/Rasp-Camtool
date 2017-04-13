@@ -1,9 +1,14 @@
+#ifndef AVDEF
+#define AVDEF
+
+#include <QObject>
 #include <stdio.h>
+#include <time.h>
 #include <sys/types.h>
 #include <thread>
+#include "phidgetsMot.h"
 #include "avaspec.h"
-#include <QObject>
-#include <QTimer>
+
 
 using namespace std ;
 
@@ -12,41 +17,53 @@ class Avaspec : public QObject {
     Q_OBJECT
 public :
 
+	
 
 
 	Avaspec() ;
 	~Avaspec() ;
 	
 	int init() ;
-	//void getSpectrometer (int specnum) ;
+	std::thread m_thread ;
     AvsIdentityType a_pList[2] ;
-    static bool darkReady, singleReady, autoReady, contReady ;
-    AvsHandle spec [2];
-    float *waves ;
-    double *outdat ;
-    double *specData, *dark ;
+	phidgetsMot *pm ;
+    	static bool darkReady[2], singleReady, autoReady, contReady [2];
+    	bool checkSpecRunning, autoScanning ;
+	char workDir [420] ;
 
-    int curLev, nspecs, nscansCollect, nscansDark ;
-    unsigned short npix ;
+    	static AvsHandle spec [2];
+    	float *waves ;
+    	float *outdat, *dark ;
+        //double *specData ;
+
+    	int curLev, curSpec, nspecs, nscansCollect, nscansDark ;
+    	int scansCollected [2] ;
+    	unsigned short npix ;
 
 	void setPixels (int specnum, int start, int stop) ;
+	void setPM(phidgetsMot *pm) ;
 
 
-	void initMeasStruct (int) ;
+    void initMeasStruct (int) ;
     void setScanData (int scans, double *dat) ;
     void setContFlag (bool f) ;
     void setIntegrationTime (int snum, float time) ;
-    void setIntegrationTime (int lev) ;
-    int autoIntegrate (int lev) ;
-    float getMax (double *dat) ;
+    void setIntegrationTime (int snum, int lev) ;
+    void checkSpec () ;
+    void setWorkDir (const char *) ;
+    int autoIntegrate (int spec, int lev) ;
+    float getMax (float *dat) ;
 
     void takeCont() ;
     void takeSingle() ;
     void takeDark () ;
     void start() ;
     void stop () ;
+    void closeFiles () ;
+    char *getTimeString (time_t) ;
 
     bool *needsUpdate, contFlag ;
+
     MeasConfigType l_PrepareMeasData[2];
 
     static void darkCallback (AvsHandle *hnd, int *result) ;
@@ -56,14 +73,19 @@ public :
 
     static int intTimes [7], nscansAvg[7] ;
     static int maxDN ;
-    QTimer *timer ;
+    FILE *contUnit[2] ;
 
+signals :
+    void plotSpec (int) ;
+/*
 signals :
     void gotData() ;
     void newInt (int) ;
 
 public slots :
     void checkSpec() ;
+*/
 
 } ;
 
+#endif

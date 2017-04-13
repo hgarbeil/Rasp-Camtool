@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include "Avaspec.h"
 #include "GPS.h"
+#include "phidgetsMot.h"
 
 
 namespace Ui {
@@ -19,13 +20,16 @@ public:
     ~MainWindow();
 
     Avaspec *ava ;
+    phidgetsMot *pm ;
     GPS *gps ;
+    int numSpec ;
 
     double *waves, *specdata ;
     QTimer *upTimer ;
 private slots:
     void on_singleScanButton_clicked();
     void on_gotData() ;
+    void plotSpec (int) ;
     void on_newInt (int) ;
     void updateGUI () ;
 

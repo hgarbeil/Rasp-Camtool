@@ -4,9 +4,9 @@ FLAGS = -g
 CCFLAGS = ${FLAGS} -std=c++11
 
 
-OBJS = main.o Avaspec.o GPIO.o
-LIBS = -L/usr/local/lib -lavs -lpthread -lpigpio
-INCLUDES = -I/usr/local/include/libavs 
+OBJS = main.o Avaspec.o GPIO.o phidgetsMot.o GPS.o 
+LIBS = -L/usr/local/lib -lavs -lpthread -lpigpio -lphidget21 -lgps
+INCLUDES = -I/usr/local/include/libavs -I.. 
 EXECUTABLE = GasSpec
 
 .cpp.o :

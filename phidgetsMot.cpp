@@ -138,27 +138,27 @@ void phidgetsMot::setCalPositions (int d, int l, int h, int r){
 
 void phidgetsMot::setDark  (){
 
-    emit (0) ;
+
     setPosition (servoCell, dark) ;
 
 
 }
 void phidgetsMot::setLow  (){
 
-    emit (1) ;
+
     setPosition (servoCell, low) ;
 
 }
 void phidgetsMot::setHigh  (){
 
-    emit (2) ;
+
     setPosition (servoCell, high) ;
 
 }
 void phidgetsMot::setRef  (){
 
-    emit (3) ;
-    setPosition (servoCell, ref) ;
+
+    setPosition (servo, ref) ;
 
 
 }
@@ -214,7 +214,5 @@ void phidgetsMot::scanSet (int ang){
     this->setPosition (servoScan, ang) ;
 }
 
-void phidgetsMot::emit (int state){
-	printf ("Cell state is %d\r\n", state) ;
-}
+
 
