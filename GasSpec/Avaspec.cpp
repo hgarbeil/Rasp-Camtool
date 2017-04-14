@@ -63,18 +63,12 @@ Avaspec::Avaspec() {
 	waves = 0l ;
 	specData = 0L ;
     	dark = 0L ;
-
 	npix = 3648 ;
-    	nscansCollect = 500000 ;
+    	nscansCollect = 100 ;
     	nscansDark = 5 ;
-
     	autoReady = false ;
     	singleReady = false ;
 	outdat = new float [3648*2] ;
-
-    //timer = new QTimer () ;
-    //connect (timer, SIGNAL (timeout()), this, SLOT (checkSpec())) ;
-    //timer->start (20) ;
     	curLev = 1 ;
     	nspecs = 2 ;
 
@@ -159,7 +153,7 @@ void Avaspec::start () {
 			needsUpdate[i] = false ;
 		}
         AVS_StopMeasure (spec[i]) ;
-        //status = AVS_Measure(spec[i], &Avaspec::dataCallback, nscans) ;
+
         status = AVS_Measure(spec[i], NULL, nscans) ;
 	cout << "Measure status is " << status << endl ;
 
@@ -340,21 +334,18 @@ void Avaspec::takeCont() {
 	cur_time = time(NULL) ;
 	sprintf (fname, "%s/Cont_%s_%01d.bin", workDir, getTimeString (cur_time), i) ; 
 	contUnit[i] = fopen (fname, "w") ;
-	/*if ((i % 10) == 0) {
-		pm->setDark() ;
-	}
-	else pm->setRef () ;
-	*/
+
     	contReady[i] = false ;
     	l_PrepareMeasData[i].m_NrAverages = 1 ;
     	status = AVS_PrepareMeasure (spec[i], &l_PrepareMeasData[i]) ;
     	usleep (200000) ;
     	status = -1 ;
     	while (status <0) {
-        	status = AVS_MeasureCallback(spec[i], &Avaspec::contCallback, 1) ;
+        	status = AVS_MeasureCallback(spec[i], &Avaspec::contCallback, nscansCollect) ;
 
 	        if (status < 0) usleep (50000) ;
 	}
+		
     }
 }
 
@@ -392,9 +383,9 @@ void Avaspec::checkSpec () {
 	cout << "Writing : "<< fname << endl ;
         mtx.lock() ;
         AVS_GetScopeData (spec[i], &timLabel, &specData[npix*i]) ;
-        for (is=0; is<npix; is++) this->outdat[is] = specData[is] ;
+        for (is=0; is<npix; is++) this->outdat[is] = specData[i*npix+is] ;
         darkReady[i] = false ;
-        for (is=0; is<npix; is++) dark[i*npix+is] = specData[is] ;
+        for (is=0; is<npix; is++) dark[i*npix+is] = specData[i*npix+is] ;
         mtx.unlock() ;
 	fwrite ((char *) &dark [i * npix], 4, npix, fin) ;
 	fclose (fin) ;
@@ -422,16 +413,15 @@ void Avaspec::checkSpec () {
 	cout << "Got data for spec : " << i << endl ;
 
         mtx.lock() ;
-        AVS_GetScopeData (spec[i], &timLabel, specData) ;
+        AVS_GetScopeData (spec[i], &timLabel, &specData[i*npix]) ;
 
-        for (is=0; is<npix; is++) this->outdat[npix * i + is] = specData[is] - dark[npix *i +is] ;
+        for (is=0; is<npix; is++) this->outdat[npix * i + is] = specData[i*npix+is] - dark[npix *i +is] ;
 	fwrite ((char *)(&outdat[npix*i]), 4, 3648, contUnit[i]) ;
-        cout << "checkSpec : "  << i << scansCollected [i]++ << "  " << outdat[npix *i + 3000] << endl  ;
+        cout << "checkSpec : "  << i << " " <<scansCollected [i]++ << "  " << outdat[npix *i + 3000] << endl  ;
         contReady [i] = false ;
         mtx.unlock() ;
         //if (contFlag[i]) this->takeCont() ;
-	scansCollected [i]++ ;
-	if (scansCollected[i] >= 100) checkSpecRunning = false ;
+	/*
 	else {
 		status = -1 ;
     		while (status <0) {
@@ -441,6 +431,8 @@ void Avaspec::checkSpec () {
 
 		}
 	}
+	*/
+	if (scansCollected[0] >= nscansCollect && scansCollected[1] >= nscansCollect) checkSpecRunning = false ;
 
     }
 

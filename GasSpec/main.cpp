@@ -1,10 +1,12 @@
+// command line program to retrieve spectrometer data, integrates GPS, imu
+// and temp, humidity info
 
 #include <unistd.h>
 #include <iostream>
 #include "Avaspec.h"
 #include "GPIO.h"
-#include "phidgetsMot.h"
 #include "GPS.h"
+#include "phidgetsMot.h"
 
 int main(int argc, char *argv[])
 {
@@ -28,14 +30,14 @@ int main(int argc, char *argv[])
 	cout << "alt : "<< alt  << endl ;
 
 	cout << "Position dark " << endl ;
-	pm->setDark () ;
 	avs->setPM (pm) ;
  	avs->setWorkDir ("/home/pi/data") ;
+
 	//GPIO *gp = new GPIO() ;
 	//gp->init() ;
 
 	status = avs->init() ;
-	cout <<"Setting dark " << endl ;
+	cout <<"Setting ref/cleark " << endl ;
 	usleep (100000) ;
 	pm->setRef() ;
 	usleep (100000) ;
@@ -60,9 +62,10 @@ int main(int argc, char *argv[])
 	usleep (500000) ;
 	//gp->toggle(0) ;
 
-	cout << "Take dark " << endl ;
+	cout << "Take dark " << endl   ;
 	avs->takeDark() ;
 	usleep (500000) ;
+	cout << endl<<"***********"<< endl<< "Start Scanning " << endl   ;
 
 
 
@@ -70,9 +73,8 @@ int main(int argc, char *argv[])
 	usleep (500000) ;
 	avs->takeCont() ; 
 	
-	usleep (15000000) ;
+	//usleep (15000000) ;
 
-	/*
 
 	while (avs->checkSpecRunning) {
 	
@@ -80,7 +82,6 @@ int main(int argc, char *argv[])
 		usleep (100000) ;
 		counter++ ;
 	}
-*/
 
 	//gp->toggle(0) ;
 	usleep (100000) ;
