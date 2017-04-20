@@ -20,7 +20,32 @@ bool Avaspec::autoReady = false ;
 
 AvsHandle Avaspec::spec[] = {-1,-1} ;
 
+Avaspec::Avaspec() {
+    	needsUpdate = new bool [2] ;
+	needsUpdate[0] = true ;
+    	needsUpdate[1] = true ;
+	scansCollected [0] = 0 ;
+	scansCollected [1] = 0 ;
+
+
+	waves = 0l ;
+	specData = 0L ;
+    	dark = 0L ;
+	npix = 3648 ;
+    	nscansCollect = 800 ;
+    	nscansDark = 5 ;
+    	autoReady = false ;
+    	singleReady = false ;
+	outdat = new float [npix*2] ;
+    	curLev = 1 ;
+    	nspecs = 2 ;
+	lastMinute2[0] = -1 ;
+	lastMinute2[1] = -1 ;
+
+}
+
 void Avaspec::darkCallback (AvsHandle *av, int *result) {
+
 	darkReady[0] = false ;
 	darkReady[1] = false ;
         for (int i=0;i<2; i++){
@@ -32,6 +57,7 @@ void Avaspec::darkCallback (AvsHandle *av, int *result) {
 }
 
 void Avaspec::setGPS (GPS *g) {
+
 	gps = g ;
 }
 
@@ -56,35 +82,13 @@ void Avaspec::autoCallback (AvsHandle *av, int *result) {
     autoReady = true ;
 }
 
+// get phidgets motor class instance
 void Avaspec::setPM (phidgetsMot *Pm) {
 	pm = Pm ;
 }
 
-Avaspec::Avaspec() {
-    	needsUpdate = new bool [2] ;
-	needsUpdate[0] = true ;
-    	needsUpdate[1] = true ;
-	scansCollected [0] = 0 ;
-	scansCollected [1] = 0 ;
-
-
-	waves = 0l ;
-	specData = 0L ;
-    	dark = 0L ;
-	npix = 3648 ;
-    	nscansCollect = 800 ;
-    	nscansDark = 5 ;
-    	autoReady = false ;
-    	singleReady = false ;
-	outdat = new float [npix*2] ;
-    	curLev = 1 ;
-    	nspecs = 2 ;
-	lastMinute2[0] = -1 ;
-	lastMinute2[1] = -1 ;
-
-
-}
-
+// initializing... connect to spectrometers
+// get wavelengths and write to disk
 int Avaspec::init() {
     int i, ispec ;
     char wavefile [420], prefix[420] ;
@@ -145,13 +149,12 @@ int Avaspec::init() {
     m_thread = std::thread (&Avaspec::checkSpec, this) ;
     m_thread.detach() ;
 
-
-
     return (1) ;
 
 }
 
 
+// test method, not used in this application
 void Avaspec::start () {
     int i, status ;
     short nscans  ;
@@ -190,9 +193,6 @@ void Avaspec::setScanData (int nscans, double *d) {
 }
 
 void Avaspec::initMeasStruct (int specNum){ 
-
-
-
 
     l_PrepareMeasData[specNum].m_StartPixel = 0 ;
     l_PrepareMeasData[specNum].m_StopPixel = 3647 ;
@@ -240,6 +240,8 @@ void Avaspec::setIntegrationTime(int specnum, int lev) {
     usleep (100000) ;
 }
 
+// get optimal integration time based upon returned max DN at various integration
+// times, Stops when saturated, spectrometer calls autoCallback
 int Avaspec::autoIntegrate (int specnum, int level) {
 
     int status = -1 ;
@@ -264,8 +266,6 @@ int Avaspec::autoIntegrate (int specnum, int level) {
     return (1) ;
 
 }
-
-
 
 
 
@@ -331,6 +331,7 @@ void Avaspec::setContFlag (bool f) {
     contFlag = f ;
 }
 
+// for repeat scan also open binary output file and text output file
 void Avaspec::takeCont() {
     char fname [240], prefix [240] ;
     int i,  is, specNum, count=0, ifail, isucc, status ;
@@ -348,8 +349,10 @@ void Avaspec::takeCont() {
 	cur_time = time(NULL) ;
 	//sprintf (fname, "%s/Scan_%s_%01d.bin", workDir, getTimeString (cur_time), i) ; 
 	getFilePrefix (prefix) ;
-	sprintf (fname, "%s/Scant_%s_%01d.bin", workDir, prefix, i) ; 
+	sprintf (fname, "%s/Scan_%s_%01d.bin", workDir, prefix, i) ; 
 	contUnit[i] = fopen (fname, "w") ;
+	sprintf (fname, "%s/GPS_%s_%01d.txt", workDir, prefix, i) ; 
+	textUnit[i] = fopen (fname, "w") ;
 	lastMinute2[i] = gps->min/2 ;
 
 
@@ -381,6 +384,8 @@ float Avaspec::getMax (float *dat) {
 
 // gets data from spectrometer and does whatever is appropriate
 void Avaspec::checkSpec () {
+    long gpsdate, gpstime ;
+    float pitch, roll, yaw, temp, pressure, lat, lon, alt ;
     int i, status, count=0, is, curMin2 ;
     int curTime2 ;
     float scanNum ;
@@ -405,6 +410,7 @@ void Avaspec::checkSpec () {
         cout  << "checkSpec : darkReady" << endl  ;
 	cout << "Writing : "<< fname << endl ;
         mtx.lock() ;
+
         AVS_GetScopeData (spec[i], &timLabel, &specData[npix*i]) ;
         //for (is=0; is<npix; is++) this->outdat[is] = specData[i*npix+is] ;
         darkReady[i] = false ;
@@ -437,17 +443,29 @@ void Avaspec::checkSpec () {
 	if (curTime2 != lastMinute2[i]) {
 		getFilePrefix(prefix) ;
 		lastMinute2[i] = curTime2 ;
-		sprintf (fname, "%s/Cont_%s_%01d.bin", workDir, prefix, i) ; 
+		sprintf (fname, "%s/Scan_%s_%01d.bin", workDir, prefix, i) ; 
 		fclose (contUnit[i]) ;
+		fclose (textUnit[i]) ;
 		contUnit[i]=fopen (fname, "w") ;
+		sprintf (fname, "%s/GPS_%s_%01d.txt", workDir, prefix, i) ; 
+		textUnit[i]=fopen (fname, "w") ;
 	}
 
         mtx.lock() ;
+	// imu values
+	imu->getEuler (&roll, &pitch, &yaw) ;
+	imu->getTPA (&temp, &pressure, &alt) ;
+	// get vals from gps but use GPS alt, not from imu (will replace)
+	gps->getData (&gpsdate, &gpstime, &lat, &lon, &alt) ;
+	// get spec data
         AVS_GetScopeData (spec[i], &timLabel, &specData[i*npix]) ;
 	scanNum = (float) scansCollected[i] ; 
 	fwrite ((char *)&scanNum, 4, 1, contUnit[i]) ; 
         for (is=0; is<npix; is++) this->outdat[npix * i + is] = specData[i*npix+is] - dark[npix *i +is] ;
+	// output to files and console...
 	fwrite ((char *)(&outdat[npix*i]), 4, 3648, contUnit[i]) ;
+	fprintf (textUnit[i], "%d %ld\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", scansCollected[i], 
+		gpstime, lat, lon, alt,roll, pitch, yaw, temp, pressure) ;
 	cout << "write spec scan  : " << i << "  " << 
 		scansCollected[i] << endl ;
 	scansCollected[i]++ ;;  
