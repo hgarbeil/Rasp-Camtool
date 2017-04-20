@@ -12,7 +12,7 @@ std::mutex mtx ;
 
 int Avaspec::intTimes [] = {50, 100, 250, 500, 750, 1000, 1500} ;
 int Avaspec::nscansAvg [] = {8, 4, 4, 2, 2,1,1} ;
-int Avaspec::maxDN = 16384. * .9 ;
+int Avaspec::maxDN = 16384. * .82 ;
 bool Avaspec::darkReady[] = {false, false} ;
 bool Avaspec::contReady[] = {false, false} ;
 bool Avaspec::singleReady = false ;
@@ -353,6 +353,8 @@ void Avaspec::takeCont() {
 	contUnit[i] = fopen (fname, "w") ;
 	sprintf (fname, "%s/GPS_%s_%01d.txt", workDir, prefix, i) ; 
 	textUnit[i] = fopen (fname, "w") ;
+	sprintf (fname, "%s/Raw_%s_%01d.bin", workDir, prefix, i) ; 
+	//rawUnit[i] = fopen (fname, "w") ;
 	lastMinute2[i] = gps->min/2 ;
 
 
@@ -449,6 +451,8 @@ void Avaspec::checkSpec () {
 		contUnit[i]=fopen (fname, "w") ;
 		sprintf (fname, "%s/GPS_%s_%01d.txt", workDir, prefix, i) ; 
 		textUnit[i]=fopen (fname, "w") ;
+		sprintf (fname, "%s/Raw_%s_%01d.bin", workDir, prefix, i) ; 
+		//rawUnit[i] = fopen (fname, "w") ;
 	}
 
         mtx.lock() ;
@@ -460,6 +464,7 @@ void Avaspec::checkSpec () {
 	// get spec data
         AVS_GetScopeData (spec[i], &timLabel, &specData[i*npix]) ;
 	scanNum = (float) scansCollected[i] ; 
+	//fwrite ((char *) &specData[npix*i], 8, npix, rawUnit[i]) ;
 	fwrite ((char *)&scanNum, 4, 1, contUnit[i]) ; 
         for (is=0; is<npix; is++) this->outdat[npix * i + is] = specData[i*npix+is] - dark[npix *i +is] ;
 	// output to files and console...
@@ -499,6 +504,8 @@ void Avaspec::checkSpec () {
 	cout << intTimes[curLev] << " : Max val is " <<mval << endl ;
 	
         if (mval >= Avaspec::maxDN ) {
+		curLev-- ;
+                setIntegrationTime(curSpec, curLev);
 		cout << "Integration time to be set at " << intTimes[curLev] << endl ;
 		autoScanning = false ;
 	

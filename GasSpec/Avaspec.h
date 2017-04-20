@@ -78,7 +78,8 @@ public :
 
     static int intTimes [7], nscansAvg[7] ;
     static int maxDN ;
-    FILE *contUnit[2] ;
+    // file units for output
+    FILE *contUnit[2], *textUnit[2], *rawUnit[2] ;
     int lastMinute2 [2] ;
 
 /*
