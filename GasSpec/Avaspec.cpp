@@ -72,7 +72,7 @@ Avaspec::Avaspec() {
 	specData = 0L ;
     	dark = 0L ;
 	npix = 3648 ;
-    	nscansCollect = 100 ;
+    	nscansCollect = 800 ;
     	nscansDark = 5 ;
     	autoReady = false ;
     	singleReady = false ;
@@ -87,7 +87,7 @@ Avaspec::Avaspec() {
 
 int Avaspec::init() {
     int i, ispec ;
-    char wavefile [420] ;
+    char wavefile [420], prefix[420] ;
     unsigned int bset ;
 
     //printf ("Number of mini-avs specs found %n\r\n", nspecs) ;
@@ -112,7 +112,8 @@ int Avaspec::init() {
     for (i=0; i<nspecs; i++) 
     {
     	initMeasStruct (i) ;
-	sprintf (wavefile, "%s/wavelens_%01d.txt", workDir, i) ;
+	getFilePrefix (prefix) ;
+	sprintf (wavefile, "%s/Wave_%s_%01d.txt", workDir, prefix, i) ;
 	FILE *fout = fopen (wavefile, "w") ;
     	spec[i] = AVS_Activate (&a_pList[i]) ;
     	AVS_GetLambda (spec[i], &dwaves[i*npix]) ;
@@ -341,13 +342,16 @@ void Avaspec::takeCont() {
     // init the dark array
 
     
+    // position the filter wheel in start scanning
     pm->setRef() ;
     for (i=0; i<nspecs; i++) {
 	cur_time = time(NULL) ;
-	sprintf (fname, "%s/Cont_%s_%01d.bin", workDir, getTimeString (cur_time), i) ; 
+	//sprintf (fname, "%s/Scan_%s_%01d.bin", workDir, getTimeString (cur_time), i) ; 
 	getFilePrefix (prefix) ;
-	sprintf (fname, "%s/Cont_%s_%01d.bin", workDir, prefix, i) ; 
+	sprintf (fname, "%s/Scant_%s_%01d.bin", workDir, prefix, i) ; 
 	contUnit[i] = fopen (fname, "w") ;
+	lastMinute2[i] = gps->min/2 ;
+
 
     	contReady[i] = false ;
     	l_PrepareMeasData[i].m_NrAverages = 1 ;
@@ -363,6 +367,7 @@ void Avaspec::takeCont() {
     }
 }
 
+// returns the max value from the input float spectrum
 float Avaspec::getMax (float *dat) {
     int i ;
     float max = -1.E9 ;
@@ -374,13 +379,15 @@ float Avaspec::getMax (float *dat) {
     return max ;
 }
 
+// gets data from spectrometer and does whatever is appropriate
 void Avaspec::checkSpec () {
     int i, status, count=0, is, curMin2 ;
+    int curTime2 ;
     float scanNum ;
     unsigned int timLabel ;
     time_t cur_time ;
     char *c_time_string ;
-    char fname [420] ;
+    char fname [420], prefix[420], txtfile[420] ;
     //status = AVS_PollScan (spec[0]) ;
 
     while (checkSpecRunning) {
@@ -390,7 +397,8 @@ void Avaspec::checkSpec () {
 	// get current time for file naming
 	cur_time = time(NULL) ;
 	c_time_string = ctime (&cur_time) ;
-	sprintf (fname, "%s/Dark_%s_%01d.bin", workDir, getTimeString (cur_time), i) ; 
+	getFilePrefix (prefix) ;
+	sprintf (fname, "%s/Dark_%s_%01d.bin", workDir, prefix, i) ; 
 	FILE *fin = fopen (fname, "w") ;
 	
 
@@ -427,8 +435,11 @@ void Avaspec::checkSpec () {
 
 	curTime2 = gps->min / 2 ;
 	if (curTime2 != lastMinute2[i]) {
-		getFileUnits(i) ;
+		getFilePrefix(prefix) ;
 		lastMinute2[i] = curTime2 ;
+		sprintf (fname, "%s/Cont_%s_%01d.bin", workDir, prefix, i) ; 
+		fclose (contUnit[i]) ;
+		contUnit[i]=fopen (fname, "w") ;
 	}
 
         mtx.lock() ;

@@ -5,8 +5,8 @@ std::mutex mutlock ;
 
 GPS::GPS () {
 
-	this->init() ;
-	keepRunning = true ;
+    this->init() ;
+    keepRunning = true ;
     data.time = 0 ;
     data.date = 0 ;
     data.altitude = -10 ;
@@ -16,6 +16,9 @@ GPS::GPS () {
     lat = 0. ;
     lon = 0. ;
     alt = 0. ;
+    hr = 0 ;
+    min = 0 ;
+    sec = 0 ;
 }
 
 GPS::~GPS() {
@@ -39,6 +42,8 @@ void GPS::getData(long *dat, long *tim, float *lat, float *lon, float *alt) {
 	*lon = data.longitude ;
 	*alt = data.altitude ;
 
+	
+
 	return ;
 }
 void GPS::stop () {
@@ -60,6 +65,10 @@ void GPS::startCollecting () {
 	date = data.date ;
         alt = data.altitude ;
 	time = data.time ;
+	hr = time / 10000 ;
+	min = (time - (hr * 10000)) / 100 ;
+	sec = time - (hr * 10000) - (min * 100) ;
+	
         mutlock.unlock() ;
 		
 	}

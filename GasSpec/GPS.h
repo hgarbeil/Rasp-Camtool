@@ -29,9 +29,8 @@ public :
     	volatile float  lat, lon, alt ;
 	volatile long date, time ;
 	//volatile int day_month, month, year ;
+	volatile int hr, min, sec ;
 	
-
-
 } ;
 
 #endif	
