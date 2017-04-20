@@ -17,6 +17,7 @@ bool Avaspec::darkReady[] = {false, false} ;
 bool Avaspec::contReady[] = {false, false} ;
 bool Avaspec::singleReady = false ;
 bool Avaspec::autoReady = false ;
+
 AvsHandle Avaspec::spec[] = {-1,-1} ;
 
 void Avaspec::darkCallback (AvsHandle *av, int *result) {
@@ -30,6 +31,13 @@ void Avaspec::darkCallback (AvsHandle *av, int *result) {
 	}
 }
 
+void Avaspec::setGPS (GPS *g) {
+	gps = g ;
+}
+
+void Avaspec::setIMU (IMUThread *im) {
+	imu = im ;
+}
 void Avaspec::dataCallback (AvsHandle *av, int *result) {
     singleReady = true ;
 }
@@ -68,9 +76,12 @@ Avaspec::Avaspec() {
     	nscansDark = 5 ;
     	autoReady = false ;
     	singleReady = false ;
-	outdat = new float [3648*2] ;
+	outdat = new float [npix*2] ;
     	curLev = 1 ;
     	nspecs = 2 ;
+	lastMinute2[0] = -1 ;
+	lastMinute2[1] = -1 ;
+
 
 }
 
@@ -223,7 +234,7 @@ void Avaspec::setIntegrationTime(int snum, float ftime) {
 void Avaspec::setIntegrationTime(int specnum, int lev) {
     l_PrepareMeasData[specnum].m_IntegrationTime = Avaspec::intTimes[lev] ;
     l_PrepareMeasData[specnum].m_NrAverages = Avaspec::nscansAvg [lev] ;
-    AVS_PrepareMeasure (spec[specnum], &l_PrepareMeasData[0]) ;
+    AVS_PrepareMeasure (spec[specnum], &l_PrepareMeasData[specnum]) ;
     needsUpdate[specnum] = false ;
     usleep (100000) ;
 }
@@ -296,6 +307,7 @@ void Avaspec::takeDark() {
 
 }
 
+// takeSingle not being used here.. used for debugging etc
 void Avaspec::takeSingle() {
     int i,  is, specNum, count=0, ifail, isucc, status ;
     unsigned int timLabel ;
@@ -319,7 +331,7 @@ void Avaspec::setContFlag (bool f) {
 }
 
 void Avaspec::takeCont() {
-    char fname [240] ;
+    char fname [240], prefix [240] ;
     int i,  is, specNum, count=0, ifail, isucc, status ;
     unsigned int timLabel ;
     short icols = 1 ;
@@ -333,6 +345,8 @@ void Avaspec::takeCont() {
     for (i=0; i<nspecs; i++) {
 	cur_time = time(NULL) ;
 	sprintf (fname, "%s/Cont_%s_%01d.bin", workDir, getTimeString (cur_time), i) ; 
+	getFilePrefix (prefix) ;
+	sprintf (fname, "%s/Cont_%s_%01d.bin", workDir, prefix, i) ; 
 	contUnit[i] = fopen (fname, "w") ;
 
     	contReady[i] = false ;
@@ -361,7 +375,8 @@ float Avaspec::getMax (float *dat) {
 }
 
 void Avaspec::checkSpec () {
-    int i, status, count=0, is ;
+    int i, status, count=0, is, curMin2 ;
+    float scanNum ;
     unsigned int timLabel ;
     time_t cur_time ;
     char *c_time_string ;
@@ -383,7 +398,7 @@ void Avaspec::checkSpec () {
 	cout << "Writing : "<< fname << endl ;
         mtx.lock() ;
         AVS_GetScopeData (spec[i], &timLabel, &specData[npix*i]) ;
-        for (is=0; is<npix; is++) this->outdat[is] = specData[i*npix+is] ;
+        //for (is=0; is<npix; is++) this->outdat[is] = specData[i*npix+is] ;
         darkReady[i] = false ;
         for (is=0; is<npix; is++) dark[i*npix+is] = specData[i*npix+is] ;
         mtx.unlock() ;
@@ -399,7 +414,7 @@ void Avaspec::checkSpec () {
         AVS_GetScopeData (spec[0], &timLabel, specData) ;
 
         mtx.lock() ;
-        for (is=0; is<npix; is++) this->outdat[is] = specData[is] - dark[is] ;
+        //for (is=0; is<npix; is++) this->outdat[is] = specData[is] - dark[is] ;
         mtx.unlock() ;
         singleReady = false ;
         //for (is=0; is<npix; is++) outdat[is] = specData[is] - dark[is];
@@ -409,15 +424,22 @@ void Avaspec::checkSpec () {
 
     for (i=0; i<nspecs; i++) 
     if (contReady[i]) {
-	
-	cout << "Got data for spec : " << i << endl ;
+
+	curTime2 = gps->min / 2 ;
+	if (curTime2 != lastMinute2[i]) {
+		getFileUnits(i) ;
+		lastMinute2[i] = curTime2 ;
+	}
 
         mtx.lock() ;
         AVS_GetScopeData (spec[i], &timLabel, &specData[i*npix]) ;
-
+	scanNum = (float) scansCollected[i] ; 
+	fwrite ((char *)&scanNum, 4, 1, contUnit[i]) ; 
         for (is=0; is<npix; is++) this->outdat[npix * i + is] = specData[i*npix+is] - dark[npix *i +is] ;
 	fwrite ((char *)(&outdat[npix*i]), 4, 3648, contUnit[i]) ;
-        cout << "checkSpec : "  << i << " " <<scansCollected [i]++ << "  " << outdat[npix *i + 3000] << endl  ;
+	cout << "write spec scan  : " << i << "  " << 
+		scansCollected[i] << endl ;
+	scansCollected[i]++ ;;  
         contReady [i] = false ;
         mtx.unlock() ;
         //if (contFlag[i]) this->takeCont() ;
@@ -516,3 +538,13 @@ char *Avaspec::getTimeString (time_t intime) {
 	return outstring ;
 }
 	
+
+void Avaspec::getFilePrefix (char *prefx) {
+	
+	int yr, mon, day ;
+	long gtime ;
+	
+	gps->getDateString (&day, &mon, &yr, &gtime) ;
+	sprintf (prefx, "%04d%02d%02d_%06ld",yr, mon, day, gtime) ; 
+ 
+}

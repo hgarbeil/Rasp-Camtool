@@ -6,13 +6,15 @@
 #include "Avaspec.h"
 #include "GPIO.h"
 #include "GPS.h"
+#include "IMUThread.h"
 #include "phidgetsMot.h"
 
 int main(int argc, char *argv[])
 {
 	float lat, lon, alt ;
-	long gtime ;
+	long gtime, gdate ;
 	int status , counter = 0 ;
+	int day, mon, year ;
 
 	// declare the spectrometer, motor and gps classes
 	Avaspec *avs = new Avaspec () ;
@@ -21,17 +23,26 @@ int main(int argc, char *argv[])
 	gps->init() ;
 	gps->start() ;
 
+	IMUThread *imu = new IMUThread () ;
+	imu->newIMU() ;
+	imu->startThread() ;
+	
+
 	// get the start gps info
 	sleep (5) ;
-	gps->getData (&gtime, &lat, &lon, &alt) ;
+	gps->getData (&gdate, &gtime, &lat, &lon, &alt) ;
+	cout << "date : "<<gdate  << endl ;
 	cout << "time : "<<gtime  << endl ;
 	cout << "lat : "<< lat  << endl ;
 	cout << "lon : "<< lon  << endl ;
 	cout << "alt : "<< alt  << endl ;
+	//gps->getDateString (&day, &mon, &year) ;
 
 	cout << "Position dark " << endl ;
 	avs->setPM (pm) ;
  	avs->setWorkDir ("/home/pi/data") ;
+	avs->setGPS (gps) ;
+	avs->setIMU (imu) ; 
 
 	//GPIO *gp = new GPIO() ;
 	//gp->init() ;

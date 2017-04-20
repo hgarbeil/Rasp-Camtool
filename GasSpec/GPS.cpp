@@ -8,6 +8,7 @@ GPS::GPS () {
 	this->init() ;
 	keepRunning = true ;
     data.time = 0 ;
+    data.date = 0 ;
     data.altitude = -10 ;
     data.latitude = 0.0 ;
     data.longitude = 0. ;
@@ -30,8 +31,9 @@ void GPS::start () {
 	m_thread = std::thread (&GPS::startCollecting, this) ;
 }
 
-void GPS::getData(long *tim, float *lat, float *lon, float *alt) {
+void GPS::getData(long *dat, long *tim, float *lat, float *lon, float *alt) {
 	
+	*dat = data.date ;
 	*tim = data.time ;
 	*lat = data.latitude ;
 	*lon = data.longitude ;
@@ -48,21 +50,28 @@ void GPS::startCollecting () {
 
 	while (keepRunning) {
         mutlock.lock() ;
-		gps_location (&data) ;
+	gps_location (&data) ;
         //mutlock.unlock() ;
-       // printf ("TIME : %ld  Lat : %lf\tLon : %lf\r\n", data.time,
-        //	data.latitude, data.longitude) ;
+        //printf ("TIME : %ld  Lat : %lf\tLon : %lf Alt: %lf\r\n", data.time,
+        //	data.latitude, data.longitude, data.altitude) ;
         //mutlock.lock() ;
-		lat = data.latitude ;
-		lon = data.longitude ;
+	lat = data.latitude ;
+	lon = data.longitude ;
+	date = data.date ;
         alt = data.altitude ;
+	time = data.time ;
         mutlock.unlock() ;
 		
 	}
 }
 
 
-		
+void GPS::getDateString (int *day_of_month, int *mon, int *yr, long *tim) {
+	
+	*day_of_month = data.date / 10000 ;
+	*mon = (data.date - (*day_of_month * 10000 )) / 100 ;
+	*yr = (data.date - (*day_of_month * 10000 )) - (100 * *mon) + 2000 ; 
+	*tim = data.time ;
 
-
+}
 	

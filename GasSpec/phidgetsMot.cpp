@@ -4,10 +4,10 @@
 
 phidgetsMot::phidgetsMot () {
 
-    dark = 40 ;
+    dark = 35 ;
     low = 80 ;
     high = 120 ;
-    ref = 150 ;
+    ref = 125 ;
 
     nmotors = 1 ;
     caloff = 0 ;

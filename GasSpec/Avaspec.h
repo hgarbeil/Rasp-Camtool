@@ -5,6 +5,9 @@
 #include <thread>
 #include "avaspec.h"
 #include "phidgetsMot.h"
+#include "GPS.h"
+#include "IMUThread.h"
+
 
 using namespace std ;
 
@@ -22,6 +25,10 @@ public :
 	std::thread m_thread ;
     	AvsIdentityType a_pList[2] ;
 	phidgetsMot *pm ;
+	GPS *gps ;
+	IMUThread *imu ;
+
+
     	static bool darkReady[2], singleReady, autoReady, contReady [2];
     	bool checkSpecRunning, autoScanning ;
 	char workDir [420] ;
@@ -31,12 +38,16 @@ public :
     	float *outdat, *dark ;
     	double *specData ; 
 
+
     	int curLev, curSpec, nspecs, nscansCollect, nscansDark ;
     	int scansCollected [2] ;
     	unsigned short npix ;
 
 	void setPixels (int specnum, int start, int stop) ;
 	void setPM(phidgetsMot *pm) ;
+	void getFilePrefix (char *) ;
+	void setGPS (GPS *) ;
+	void setIMU (IMUThread *) ;
 
 
     void initMeasStruct (int) ;
@@ -68,6 +79,7 @@ public :
     static int intTimes [7], nscansAvg[7] ;
     static int maxDN ;
     FILE *contUnit[2] ;
+    int lastMinute2 [2] ;
 
 /*
 signals :

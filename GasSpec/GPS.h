@@ -1,3 +1,6 @@
+#ifndef GPSD
+#define GPSD 
+
 extern "C" {
 #include <gps.h>
 }
@@ -17,15 +20,18 @@ public :
 	std::thread m_thread ;
 	void init () ;
 	void startCollecting() ;
-	void getData(long *tim, float *lat, float *lon, float *alt) ;
+	void getData(long *date, long *tim, float *lat, float *lon, float *alt) ;
+	void getDateString(int *day, int *mon, int *yr, long *tim) ;
 	void start() ;
 	void stop() ;
 
 	loc_t data ;
-    	volatile float time, lat, lon, alt ;
+    	volatile float  lat, lon, alt ;
+	volatile long date, time ;
+	//volatile int day_month, month, year ;
 	
 
 
 } ;
 
-	
+#endif	
