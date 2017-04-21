@@ -1,0 +1,16 @@
+# udev rules for hamamatsu spectrometers
+# These rules were compiled for the Debian GNU/Linux distribution,
+# but others may, and indeed are encouraged to, use them also.
+#
+# Should you do so, PLEASE CO-ORDINATE ANY CHANGES OR ADDITIONS
+# of new devices with Ron <frank.carsten@web.de> so that we can try
+# to present users with with a standard set of device nodes
+# which they can rely on across the board.
+
+ATTRS{idVendor}=="0661", ATTRS{idProduct}=="2906", MODE="0660", GROUP="plugdev"
+ATTRS{idVendor}=="0661", ATTRS{idProduct}=="2909", MODE="0660", GROUP="plugdev"
+ATTRS{idVendor}=="0661", ATTRS{idProduct}=="1300", MODE="0660", GROUP="plugdev"
+
+ATTRS{idVendor}=="1992", ATTRS{idProduct}=="0668", MODE="0660", GROUP="plugdev"
+ATTRS{idVendor}=="2457", ATTRS{idProduct}=="1022", MODE="0660", GROUP="plugdev"
+ATTRS{idVendor}=="2457", ATTRS{idProduct}=="1014", MODE="0660", GROUP="plugdev"
