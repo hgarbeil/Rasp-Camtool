@@ -40,7 +40,34 @@ void DroneData::getPositionData (long *time, float *lat, float *lon, float *alt)
 }
 
 	
+void DroneData::getDateTime (int *yr, int *mon, int *day, int *hr, int *min, int *sec) {
+	time_t current_time ;
+	struct tm *ts ;
 
+	time(&current_time) ;
+	ts = localtime (&current_time) ;
+
+	*year = ts->tm_year + 1900 ;
+	*mon = ts->tm_mon + 1 ;
+	*day = ts->tm_mday ;
+	*hr = ts->tm_hour  ;
+	*min = ts->tm_min ;
+	*sec = ts->tm_sec ;
+}
+	
+void DroneData::getTime ( int *hr, int *min, int *sec) {
+	time_t current_time ;
+	struct tm *ts ;
+
+	time(&current_time) ;
+	ts = localtime (&current_time) ;
+	*hr = ts->tm_hour  ;
+	*min = ts->tm_min ;
+	*sec = ts->tm_sec ;
+
+}
+
+	
 
 
 

@@ -31,6 +31,8 @@ class DroneData {
 	LinuxThread *readThread ;
 	LinuxSerialDevice *serialDevice ;
 	void getPositionData (long *time, float *lat, float *lon, float *alt) ;
+	void getDateTime (int *yr, int *mon, int *day, int *hr, int *min, int *sec) ;
+	void getTime (int *hr, int *min, int *sec) ;
 
 } ;
 
