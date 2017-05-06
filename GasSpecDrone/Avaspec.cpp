@@ -41,12 +41,12 @@ Avaspec::Avaspec() {
     	nspecs = 2 ;
 	lastMinute2[0] = -1 ;
 	lastMinute2[1] = -1 ;
-	droneData = 0L ;
+	dd = 0L ;
 
 }
 
 void Avaspec::setDroneData (DroneData *dd) {
-	droneData = dd ;
+	this->dd = dd ;
 }
 
 void Avaspec::darkCallback (AvsHandle *av, int *result) {
@@ -360,7 +360,7 @@ void Avaspec::takeCont() {
 	textUnit[i] = fopen (fname, "w") ;
 	sprintf (fname, "%s/Raw_%s_%01d.bin", workDir, prefix, i) ; 
 	//rawUnit[i] = fopen (fname, "w") ;
-	lastMinute2[i] = gps->min/2 ;
+	lastMinute2[i] = dd->min/2 ;
 
 
     	contReady[i] = false ;
@@ -446,7 +446,7 @@ void Avaspec::checkSpec () {
     for (i=0; i<nspecs; i++) 
     if (contReady[i]) {
 
-	curTime2 = gps->min / 2 ;
+	curTime2 = dd->min / 2 ;
 	if (curTime2 != lastMinute2[i]) {
 		getFilePrefix(prefix) ;
 		lastMinute2[i] = curTime2 ;
@@ -582,15 +582,17 @@ char *Avaspec::getTimeString (time_t intime) {
 
 void Avaspec::getFilePrefix (char *prefx) {
 	
-	int yr, mon, day ;
+	int yr, mon, day, hr, min, sec ;
 	long gtime ;
 	yr = 2017 ;
 	mon = 05 ;
 	day = 2 ;
 
 	gtime=1015 ;
+	if (dd) {
+		dd->getDateTime (&yr, &mon, &day, &hr, &min, &sec) ; 
+	}
 	
 	//gps->getDateString (&day, &mon, &yr, &gtime) ;
-	sprintf (prefx, "%04d%02d%02d_%06ld",yr, mon, day, gtime) ; 
- 
+	sprintf (prefx, "%04d%02d%02d_%02d%02d%02d",yr, mon, day, hr, min, sec) ;
 }

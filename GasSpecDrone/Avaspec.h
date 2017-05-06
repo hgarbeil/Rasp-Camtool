@@ -28,7 +28,7 @@ public :
 	phidgetsMot *pm ;
 	GPS *gps ;
 	IMUThread *imu ;
-	DroneData *droneData ;
+	DroneData *dd ;
 
 
     	static bool darkReady[2], singleReady, autoReady, contReady [2];

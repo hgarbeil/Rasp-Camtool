@@ -4,7 +4,10 @@
 #define R2D 180./M_PI
 
 DroneData::DroneData() {
-	
+
+	hr = 0 ;
+	min = 0 ;
+	sec = 0 ;	
 	unsigned short broadcastAck ;
 	readUserConfig() ;
 	serialDevice = new LinuxSerialDevice (UserConfig::deviceName, UserConfig::baudRate) ;	
@@ -34,6 +37,7 @@ void DroneData::getPositionData (long *time, float *lat, float *lon, float *alt)
 	
 	BroadcastData bcd ;
 
+	updateTime () ;
 	bcd = api->getBroadcastData () ;
 	*lat = bcd.pos.latitude *R2D ;
 	*lon = bcd.pos.longitude *R2D ;
@@ -50,7 +54,7 @@ void DroneData::getDateTime (int *yr, int *mon, int *day, int *hr, int *min, int
 	time(&current_time) ;
 	ts = localtime (&current_time) ;
 
-	*year = ts->tm_year + 1900 ;
+	*yr = ts->tm_year + 1900 ;
 	*mon = ts->tm_mon + 1 ;
 	*day = ts->tm_mday ;
 	*hr = ts->tm_hour  ;
@@ -70,6 +74,9 @@ void DroneData::getTime ( int *hr, int *min, int *sec) {
 
 }
 
+void DroneData::updateTime () { 
+	getTime (&hr, &min, &sec) ;
+} 
 	
 
 

@@ -35,6 +35,8 @@ public :
 	void getDateTime (int *yr, int *mon, int *day, int *hr, int *min, int *sec) ;
 	void getTime (int *hr, int *min, int *sec) ;
 	void getMinute (int *min) ;
+	void updateTime () ;
+	int hr, min, sec ;
 
 } ;
 
