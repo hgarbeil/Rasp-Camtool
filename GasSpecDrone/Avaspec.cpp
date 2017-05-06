@@ -41,7 +41,12 @@ Avaspec::Avaspec() {
     	nspecs = 2 ;
 	lastMinute2[0] = -1 ;
 	lastMinute2[1] = -1 ;
+	droneData = 0L ;
 
+}
+
+void Avaspec::setDroneData (DroneData *dd) {
+	droneData = dd ;
 }
 
 void Avaspec::darkCallback (AvsHandle *av, int *result) {
@@ -579,8 +584,13 @@ void Avaspec::getFilePrefix (char *prefx) {
 	
 	int yr, mon, day ;
 	long gtime ;
+	yr = 2017 ;
+	mon = 05 ;
+	day = 2 ;
+
+	gtime=1015 ;
 	
-	gps->getDateString (&day, &mon, &yr, &gtime) ;
+	//gps->getDateString (&day, &mon, &yr, &gtime) ;
 	sprintf (prefx, "%04d%02d%02d_%06ld",yr, mon, day, gtime) ; 
  
 }

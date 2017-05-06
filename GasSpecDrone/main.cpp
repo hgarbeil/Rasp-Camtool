@@ -8,6 +8,7 @@
 #include "GPS.h"
 #include "IMUThread.h"
 #include "phidgetsMot.h"
+#include "DroneData.h"
 
 int main(int argc, char *argv[])
 {
@@ -27,6 +28,7 @@ int main(int argc, char *argv[])
 	// declare the spectrometer, motor and gps classes
 	Avaspec *avs = new Avaspec () ;
 	phidgetsMot *pm = new phidgetsMot() ;
+	DroneData *dd = new DroneData () ;
 	//GPS *gps = new GPS() ;
 	//gps->init() ;
 	//gps->start() ;
@@ -43,6 +45,7 @@ int main(int argc, char *argv[])
 	// get the start gps info
 	sleep (5) ;
 	//gps->getData (&gdate, &gtime, &lat, &lon, &alt) ;
+	dd->getPositionData (&gtime, &lat, &lon, &alt) ;
 	cout << "date : "<<gdate  << endl ;
 	cout << "time : "<<gtime  << endl ;
 	cout << "lat : "<< lat  << endl ;
@@ -53,6 +56,7 @@ int main(int argc, char *argv[])
 	cout << "Position dark " << endl ;
 	avs->setPM (pm) ;
  	avs->setWorkDir ("/home/pi/data") ;
+	avs->setDroneData (dd) ;
 	//avs->setGPS (gps) ;
 	//avs->setIMU (imu) ; 
 

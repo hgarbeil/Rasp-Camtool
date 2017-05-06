@@ -1,4 +1,7 @@
 #include "DroneData.h"
+#include <math.h>
+
+#define R2D 180./M_PI
 
 DroneData::DroneData() {
 	
@@ -32,11 +35,11 @@ void DroneData::getPositionData (long *time, float *lat, float *lon, float *alt)
 	BroadcastData bcd ;
 
 	bcd = api->getBroadcastData () ;
-	*lat = bcd.pos.latitude ;
-	*lon = bcd.pos.longitude ;
+	*lat = bcd.pos.latitude *R2D ;
+	*lon = bcd.pos.longitude *R2D ;
 	*alt = bcd.pos.altitude ;
 
-	*time = bcd.pos.time ;
+	//*time = bcd.pos.time ;
 }
 
 	

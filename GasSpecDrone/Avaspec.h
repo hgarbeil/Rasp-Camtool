@@ -7,6 +7,7 @@
 #include "phidgetsMot.h"
 #include "GPS.h"
 #include "IMUThread.h"
+#include "DroneData.h"
 
 
 using namespace std ;
@@ -27,6 +28,7 @@ public :
 	phidgetsMot *pm ;
 	GPS *gps ;
 	IMUThread *imu ;
+	DroneData *droneData ;
 
 
     	static bool darkReady[2], singleReady, autoReady, contReady [2];
@@ -48,6 +50,7 @@ public :
 	void getFilePrefix (char *) ;
 	void setGPS (GPS *) ;
 	void setIMU (IMUThread *) ;
+	void setDroneData (DroneData *) ;
 
 
     void initMeasStruct (int) ;
