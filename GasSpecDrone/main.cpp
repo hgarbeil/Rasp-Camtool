@@ -26,9 +26,9 @@ int main(int argc, char *argv[])
 	
 
 	// declare the spectrometer, motor and gps classes
+	DroneData *dd = new DroneData () ;
 	Avaspec *avs = new Avaspec () ;
 	phidgetsMot *pm = new phidgetsMot() ;
-	DroneData *dd = new DroneData () ;
 	//GPS *gps = new GPS() ;
 	//gps->init() ;
 	//gps->start() ;

@@ -8,7 +8,6 @@
 IMUThread::IMUThread() 
 {
 	m_imu = NULL ;
-	m_settings = new RTIMUSettings ("RTIMULib") ;
 	m_timer = -1 ;
 	keepRunning = true ;
 	roll = 0. ;
@@ -25,6 +24,7 @@ void IMUThread::newIMU()
 		delete m_imu ;
 		m_imu = NULL ;
 	}
+	m_settings = new RTIMUSettings ("RTIMULib") ;
 	m_imu = RTIMU::createIMU (m_settings) ;
 	m_imu->IMUInit() ;
 	m_imu->setGyroEnable(true) ;

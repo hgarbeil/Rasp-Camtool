@@ -17,30 +17,38 @@ int main(int argc, char *argv[])
 	int day, mon, year ;
 
 	// declare the spectrometer, motor and gps classes
+	sleep (2) ;
+	cout << "starting spec class " << endl ;
 	Avaspec *avs = new Avaspec () ;
+	cout << "starting phidg class " << endl ;
 	phidgetsMot *pm = new phidgetsMot() ;
+	cout << "starting gps class " << endl ;
 	GPS *gps = new GPS() ;
 	gps->init() ;
 	gps->start() ;
 
+	cout << "starting imu lass " << endl ;
 	IMUThread *imu = new IMUThread () ;
+	cout << "createdg imu lass " << endl ;
 	imu->newIMU() ;
 	imu->startThread() ;
+	//sleep (5) ;
 	
 
 	// get the start gps info
-	sleep (5) ;
+	cout << "GET GPS 5" << endl ;
 	gps->getData (&gdate, &gtime, &lat, &lon, &alt) ;
+	cout <<  "got first gps" << endl ;
 	cout << "date : "<<gdate  << endl ;
 	cout << "time : "<<gtime  << endl ;
 	cout << "lat : "<< lat  << endl ;
 	cout << "lon : "<< lon  << endl ;
 	cout << "alt : "<< alt  << endl ;
-	//gps->getDateString (&day, &mon, &year) ;
+	gps->getDateString (&day, &mon, &year, &gtime) ;
 
 	cout << "Position dark " << endl ;
 	avs->setPM (pm) ;
- 	avs->setWorkDir ("/home/pi/data") ;
+ 	avs->setWorkDir ("/specdata") ;
 	avs->setGPS (gps) ;
 	avs->setIMU (imu) ; 
 
@@ -48,9 +56,11 @@ int main(int argc, char *argv[])
 	//gp->init() ;
 
 	status = avs->init() ;
-	cout <<"Setting ref/cleark " << endl ;
+	cout <<"Sleeping" << endl ;
 	usleep (100000) ;
+	cout <<"Setting ref/clear" << endl ;
 	pm->setRef() ;
+	cout <<"Sleepingagin" << endl ;
 	usleep (100000) ;
 
 

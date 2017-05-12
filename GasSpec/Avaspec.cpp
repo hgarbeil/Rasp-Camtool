@@ -471,6 +471,7 @@ void Avaspec::checkSpec () {
 	fwrite ((char *)(&outdat[npix*i]), 4, 3648, contUnit[i]) ;
 	fprintf (textUnit[i], "%d %ld\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", scansCollected[i], 
 		gpstime, lat, lon, alt,roll, pitch, yaw, temp, pressure) ;
+	fflush (textUnit[i]) ;
 	cout << "write spec scan  : " << i << "  " << 
 		scansCollected[i] << endl ;
 	scansCollected[i]++ ;;  

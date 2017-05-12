@@ -401,6 +401,11 @@ void Avaspec::checkSpec () {
     char *c_time_string ;
     char fname [420], prefix[420], txtfile[420] ;
     //status = AVS_PollScan (spec[0]) ;
+    pitch=0. ;
+    roll=0. ;
+    yaw=0. ;
+    temp=0. ;
+    pressure=0. ;
 
     while (checkSpecRunning) {
 
@@ -462,10 +467,11 @@ void Avaspec::checkSpec () {
 
         mtx.lock() ;
 	// imu values
-	imu->getEuler (&roll, &pitch, &yaw) ;
-	imu->getTPA (&temp, &pressure, &alt) ;
+	//imu->getEuler (&roll, &pitch, &yaw) ;
+	//imu->getTPA (&temp, &pressure, &alt) ;
 	// get vals from gps but use GPS alt, not from imu (will replace)
-	gps->getData (&gpsdate, &gpstime, &lat, &lon, &alt) ;
+	//gps->getData (&gpsdate, &gpstime, &lat, &lon, &alt) ;
+	dd->getPositionData(&gpstime, &lat, &lon, &alt) ;
 	// get spec data
         AVS_GetScopeData (spec[i], &timLabel, &specData[i*npix]) ;
 	scanNum = (float) scansCollected[i] ; 
