@@ -466,9 +466,9 @@ void Avaspec::checkSpec () {
 	scanNum = (float) scansCollected[i] ; 
 	//fwrite ((char *) &specData[npix*i], 8, npix, rawUnit[i]) ;
 	fwrite ((char *)&scanNum, 4, 1, contUnit[i]) ; 
-		// Dark subtract if uncommented
+	// Dark subtract if uncommented
         //for (is=0; is<npix; is++) this->outdat[npix * i + is] = specData[i*npix+is] - dark[npix *i +is] ;
-		// Turn off dark subtract 
+	// Turn off dark subtract 
         for (is=0; is<npix; is++) this->outdat[npix * i + is] = specData[i*npix+is]  ;
 	// output to files and console...
 	fwrite ((char *)(&outdat[npix*i]), 4, 3648, contUnit[i]) ;
