@@ -466,9 +466,13 @@ void Avaspec::checkSpec () {
 	scanNum = (float) scansCollected[i] ; 
 	//fwrite ((char *) &specData[npix*i], 8, npix, rawUnit[i]) ;
 	fwrite ((char *)&scanNum, 4, 1, contUnit[i]) ; 
-        for (is=0; is<npix; is++) this->outdat[npix * i + is] = specData[i*npix+is] - dark[npix *i +is] ;
+		// Dark subtract if uncommented
+        //for (is=0; is<npix; is++) this->outdat[npix * i + is] = specData[i*npix+is] - dark[npix *i +is] ;
+		// Turn off dark subtract 
+        for (is=0; is<npix; is++) this->outdat[npix * i + is] = specData[i*npix+is]  ;
 	// output to files and console...
 	fwrite ((char *)(&outdat[npix*i]), 4, 3648, contUnit[i]) ;
+	// output gps and ins info
 	fprintf (textUnit[i], "%d %ld\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", scansCollected[i], 
 		gpstime, lat, lon, alt,roll, pitch, yaw, temp, pressure) ;
 	fflush (textUnit[i]) ;
@@ -493,6 +497,7 @@ void Avaspec::checkSpec () {
 
     }
 
+// Autointegration => check for saturation
     if (autoReady){
         autoReady = false ;
         AVS_GetScopeData (spec[curSpec], &timLabel, specData) ;
