@@ -18,21 +18,21 @@ int main(int argc, char *argv[])
 
 	// declare the spectrometer, motor and gps classes
 	sleep (2) ;
-	cout << "starting spec class " << endl ;
+	//cout << "starting spec class " << endl ;
 	Avaspec *avs = new Avaspec () ;
-	cout << "starting phidg class " << endl ;
+	//cout << "starting phidg class " << endl ;
 	phidgetsMot *pm = new phidgetsMot() ;
-	cout << "starting gps class " << endl ;
+	//cout << "starting gps class " << endl ;
 	GPS *gps = new GPS() ;
 	gps->init() ;
 	gps->start() ;
 
-	cout << "starting imu lass " << endl ;
+	//cout << "starting imu lass " << endl ;
 	IMUThread *imu = new IMUThread () ;
-	cout << "createdg imu lass " << endl ;
+	//cout << "createdg imu lass " << endl ;
 	imu->newIMU() ;
 	imu->startThread() ;
-	//sleep (5) ;
+	sleep (5) ;
 	
 
 	// get the start gps info
@@ -56,11 +56,10 @@ int main(int argc, char *argv[])
 	//gp->init() ;
 
 	status = avs->init() ;
-	cout <<"Sleeping" << endl ;
+	//cout <<"Sleeping" << endl ;
 	usleep (100000) ;
 	cout <<"Setting ref/clear" << endl ;
 	pm->setRef() ;
-	cout <<"Sleepingagin" << endl ;
 	usleep (100000) ;
 
 

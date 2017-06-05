@@ -32,7 +32,7 @@ Avaspec::Avaspec() {
 	specData = 0L ;
     	dark = 0L ;
 	npix = 3648 ;
-    	nscansCollect = 800 ;
+    	nscansCollect = 2000 ;
     	nscansDark = 5 ;
     	autoReady = false ;
     	singleReady = false ;

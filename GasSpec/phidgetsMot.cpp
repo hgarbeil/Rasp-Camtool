@@ -1,6 +1,8 @@
 #include "phidgetsMot.h"
 #include "unistd.h"
 #include "math.h"
+#include <iostream>
+using namespace std;
 
 phidgetsMot::phidgetsMot () {
 
@@ -43,7 +45,7 @@ void phidgetsMot::init(){
     //CPhidgetAdvancedServo_create (&servo1) ;
     CPhidget_open ((CPhidgetHandle) servo, -1) ;
 
-    printf("Waiting for Servo controller to be attached....");
+    printf("Waiting for Servo controller to be attached....\r\n");
     if((result = CPhidget_waitForAttachment((CPhidgetHandle)servo, 10000)))
     {
         CPhidget_getErrorDescription(result, &err);
@@ -51,7 +53,10 @@ void phidgetsMot::init(){
             return ;
 
     }
+    cout << "Result from attachment is "<< result<<endl ;
+    cout << "Servo number is " << servo << endl << flush ;
     CPhidget_getSerialNumber ((CPhidgetHandle) servo, &ser0) ;
+    cout << "Serial number is s "<< ser0 <<endl ;
     servoCell = servo ;
     //CPhidgetAdvancedServo_create (&servo1) ;
     if (nmotors ==1) return ;
@@ -100,7 +105,10 @@ void phidgetsMot::setPosition (CPhidgetServoHandle curservo, int pos){
     float newPos, incid ;
     CPhidgetServo_setEngaged (curservo, 0, 1) ;
 
+	cout <<"Phidgets setting position"  << flush<<endl ;
+
     if (curservo == servoCell) {
+	cout << "setting " << curservo << " to " << pos <<flush << endl ;
         CPhidgetServo_setPosition (curservo, 0, pos) ;
         usleep (800000) ;
         //sleep (1) ;
@@ -125,6 +133,7 @@ void phidgetsMot::setPosition (CPhidgetServoHandle curservo, int pos){
 
     //usleep (200000) ;
     CPhidgetServo_setEngaged (curservo, 0, 0) ;
+	cout <<"Phidgets done setting position"  << flush<< endl ;
 
 }
 	
@@ -157,8 +166,10 @@ void phidgetsMot::setHigh  (){
 }
 void phidgetsMot::setRef  (){
 
-    emit (3) ;
+    //emit (3) ;
+    cout << "Setting to ref " << endl ;
     setPosition (servoCell, ref) ;
+    cout << "Done setting to ref " << endl ;
 
 
 }
